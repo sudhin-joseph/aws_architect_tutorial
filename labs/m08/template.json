@@ -1,0 +1,61 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "M08 disposable sandbox: source-restricted HTTP ALB, WAF, sample-only GuardDuty notifications. Paid resources; delete after use.",
+  "Parameters": {
+    "LearnerCidr": {"Type": "String", "AllowedPattern": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}/32$", "Description": "Your test machine's public IPv4 /32, not a broad CIDR"},
+    "Email": {"Type": "String", "AllowedPattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$", "Description": "Email you control; confirm subscription"},
+    "RateAction": {"Type": "String", "Default": "Count", "AllowedValues": ["Count", "Block"]},
+    "CreateLabDetector": {"Type": "String", "Default": "false", "AllowedValues": ["true", "false"], "Description": "Explicit opt-in only when no detector exists in this account/Region"},
+    "ExistingDetectorId": {"Type": "String", "Default": "", "AllowedPattern": "^([a-f0-9]{32})?$", "Description": "Approved existing detector ID; never modified by this stack"}
+  },
+  "Rules": {
+    "ExactlyOneDetectorChoice": {"Assertions": [{"Assert": {"Fn::Or": [
+      {"Fn::And": [{"Fn::Equals": [{"Ref": "CreateLabDetector"}, "true"]}, {"Fn::Equals": [{"Ref": "ExistingDetectorId"}, ""]}]},
+      {"Fn::And": [{"Fn::Equals": [{"Ref": "CreateLabDetector"}, "false"]}, {"Fn::Not": [{"Fn::Equals": [{"Ref": "ExistingDetectorId"}, ""]}]}]}
+    ]}, "AssertDescription": "Choose a new disposable detector OR supply an approved existing detector, not both."}]}
+  },
+  "Conditions": {
+    "CreateDetector": {"Fn::Equals": [{"Ref": "CreateLabDetector"}, "true"]},
+    "BlockRate": {"Fn::Equals": [{"Ref": "RateAction"}, "Block"]}
+  },
+  "Resources": {
+    "Vpc": {"Type": "AWS::EC2::VPC", "Properties": {"CidrBlock": "10.88.0.0/16", "EnableDnsSupport": true, "EnableDnsHostnames": true}},
+    "Gateway": {"Type": "AWS::EC2::InternetGateway"},
+    "GatewayAttachment": {"Type": "AWS::EC2::VPCGatewayAttachment", "Properties": {"VpcId": {"Ref": "Vpc"}, "InternetGatewayId": {"Ref": "Gateway"}}},
+    "SubnetA": {"Type": "AWS::EC2::Subnet", "Properties": {"VpcId": {"Ref": "Vpc"}, "CidrBlock": "10.88.1.0/24", "AvailabilityZone": {"Fn::Select": [0, {"Fn::GetAZs": ""}]}}},
+    "SubnetB": {"Type": "AWS::EC2::Subnet", "Properties": {"VpcId": {"Ref": "Vpc"}, "CidrBlock": "10.88.2.0/24", "AvailabilityZone": {"Fn::Select": [1, {"Fn::GetAZs": ""}]}}},
+    "Routes": {"Type": "AWS::EC2::RouteTable", "Properties": {"VpcId": {"Ref": "Vpc"}}},
+    "InternetRoute": {"Type": "AWS::EC2::Route", "DependsOn": "GatewayAttachment", "Properties": {"RouteTableId": {"Ref": "Routes"}, "DestinationCidrBlock": "0.0.0.0/0", "GatewayId": {"Ref": "Gateway"}}},
+    "RouteA": {"Type": "AWS::EC2::SubnetRouteTableAssociation", "Properties": {"RouteTableId": {"Ref": "Routes"}, "SubnetId": {"Ref": "SubnetA"}}},
+    "RouteB": {"Type": "AWS::EC2::SubnetRouteTableAssociation", "Properties": {"RouteTableId": {"Ref": "Routes"}, "SubnetId": {"Ref": "SubnetB"}}},
+    "AlbSecurityGroup": {"Type": "AWS::EC2::SecurityGroup", "Properties": {"GroupDescription": "M08 synthetic HTTP from learner public IPv4 only", "VpcId": {"Ref": "Vpc"}, "SecurityGroupIngress": [{"IpProtocol": "tcp", "FromPort": 80, "ToPort": 80, "CidrIp": {"Ref": "LearnerCidr"}}], "SecurityGroupEgress": [{"IpProtocol": "tcp", "FromPort": 443, "ToPort": 443, "CidrIp": "127.0.0.1/32", "Description": "No application backend; suppress default allow-all egress"}]}},
+    "Alb": {"Type": "AWS::ElasticLoadBalancingV2::LoadBalancer", "DependsOn": ["InternetRoute", "RouteA", "RouteB"], "Properties": {"Type": "application", "Scheme": "internet-facing", "IpAddressType": "ipv4", "Subnets": [{"Ref": "SubnetA"}, {"Ref": "SubnetB"}], "SecurityGroups": [{"Ref": "AlbSecurityGroup"}]}},
+    "Listener": {"Type": "AWS::ElasticLoadBalancingV2::Listener", "Properties": {"LoadBalancerArn": {"Ref": "Alb"}, "Port": 80, "Protocol": "HTTP", "DefaultActions": [{"Type": "fixed-response", "FixedResponseConfig": {"StatusCode": "200", "ContentType": "text/plain", "MessageBody": "M08 synthetic sandbox response. No sensitive data."}}]}},
+    "WebAcl": {"Type": "AWS::WAFv2::WebACL", "Properties": {
+      "Scope": "REGIONAL", "DefaultAction": {"Allow": {}},
+      "VisibilityConfig": {"CloudWatchMetricsEnabled": true, "SampledRequestsEnabled": true, "MetricName": "M08Acl"},
+      "Rules": [
+        {"Name": "BlockTestPath", "Priority": 0, "Action": {"Block": {}}, "Statement": {"ByteMatchStatement": {"FieldToMatch": {"UriPath": {}}, "PositionalConstraint": "EXACTLY", "SearchString": "/blocked", "TextTransformations": [{"Priority": 0, "Type": "NONE"}]}}, "VisibilityConfig": {"CloudWatchMetricsEnabled": true, "SampledRequestsEnabled": true, "MetricName": "M08Block"}},
+        {"Name": "RateTestPath", "Priority": 10, "Action": {"Fn::If": ["BlockRate", {"Block": {}}, {"Count": {}}]}, "Statement": {"RateBasedStatement": {"Limit": 100, "EvaluationWindowSec": 60, "AggregateKeyType": "IP", "ScopeDownStatement": {"ByteMatchStatement": {"FieldToMatch": {"UriPath": {}}, "PositionalConstraint": "EXACTLY", "SearchString": "/rate-test", "TextTransformations": [{"Priority": 0, "Type": "NONE"}]}}}}, "VisibilityConfig": {"CloudWatchMetricsEnabled": true, "SampledRequestsEnabled": true, "MetricName": "M08Rate"}}
+      ]
+    }},
+    "Association": {"Type": "AWS::WAFv2::WebACLAssociation", "Properties": {"ResourceArn": {"Ref": "Alb"}, "WebACLArn": {"Fn::GetAtt": ["WebAcl", "Arn"]}}},
+    "Detector": {"Type": "AWS::GuardDuty::Detector", "Condition": "CreateDetector", "Properties": {"Enable": true}},
+    "Topic": {"Type": "AWS::SNS::Topic"},
+    "EmailSubscription": {"Type": "AWS::SNS::Subscription", "Properties": {"Protocol": "email", "Endpoint": {"Ref": "Email"}, "TopicArn": {"Ref": "Topic"}}},
+    "TopicPolicy": {"Type": "AWS::SNS::TopicPolicy", "Properties": {"Topics": [{"Ref": "Topic"}], "PolicyDocument": {"Version": "2012-10-17", "Statement": [{"Sid": "AllowEventBridgePublish", "Effect": "Allow", "Principal": {"Service": "events.amazonaws.com"}, "Action": "sns:Publish", "Resource": {"Ref": "Topic"}}]}}},
+    "SampleRule": {"Type": "AWS::Events::Rule", "DependsOn": "TopicPolicy", "Properties": {"State": "ENABLED", "EventPattern": {"source": ["aws.guardduty"], "detail-type": ["GuardDuty Finding"], "account": [{"Ref": "AWS::AccountId"}], "detail": {"service": {"additionalInfo": {"sample": [true]}}}}, "Targets": [{"Id": "SampleEmail", "Arn": {"Ref": "Topic"}}]}}
+  },
+  "Outputs": {
+    "ApplicationUrl": {"Value": {"Fn::Sub": "http://${Alb.DNSName}"}},
+    "AlbArn": {"Value": {"Ref": "Alb"}},
+    "SecurityGroupId": {"Value": {"Ref": "AlbSecurityGroup"}},
+    "WebAclArn": {"Value": {"Fn::GetAtt": ["WebAcl", "Arn"]}},
+    "WebAclId": {"Value": {"Fn::GetAtt": ["WebAcl", "Id"]}},
+    "WebAclName": {"Value": {"Fn::Select": [0, {"Fn::Split": ["|", {"Ref": "WebAcl"}]}]}},
+    "RuleName": {"Value": {"Ref": "SampleRule"}},
+    "TopicArn": {"Value": {"Ref": "Topic"}},
+    "VpcId": {"Value": {"Ref": "Vpc"}},
+    "DetectorId": {"Value": {"Fn::If": ["CreateDetector", {"Ref": "Detector"}, {"Ref": "ExistingDetectorId"}]}}
+  }
+}

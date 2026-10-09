@@ -1,0 +1,10 @@
+{
+  "scope": "L10 offline two-VPC IPv4 route worksheet, not deployed state",
+  "vpcs": {
+    "A": {"cidr": "10.100.0.0/16", "worker_subnet": "10.100.10.0/24", "attachment_subnet": "10.100.20.0/24", "routes": [{"destination": "10.101.0.0/16", "target": "tgw"}], "s3_gateway": true},
+    "B": {"cidr": "10.101.0.0/16", "worker_subnet": "10.101.10.0/24", "attachment_subnet": "10.101.20.0/24", "routes": [{"destination": "10.100.0.0/16", "target": "tgw"}], "s3_gateway": false}
+  },
+  "associations": {"A": "lab", "B": "lab"},
+  "tgw_tables": {"lab": [{"destination": "10.100.0.0/16", "target": "A"}, {"destination": "10.101.0.0/16", "target": "B"}]},
+  "s3_requirements": {"A": "local-gateway", "B": "none"}
+}

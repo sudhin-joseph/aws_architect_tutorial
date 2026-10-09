@@ -1,0 +1,20 @@
+{
+  "purpose": "L09a offline worksheet; not CloudFormation or deployed-state evidence",
+  "vpcCidr": "10.90.0.0/16",
+  "egress": "none",
+  "routeTables": {
+    "main": [{"destination": "10.90.0.0/16", "target": "local"}],
+    "public": [{"destination": "10.90.0.0/16", "target": "local"}, {"destination": "0.0.0.0/0", "target": "igw"}],
+    "app-A": [{"destination": "10.90.0.0/16", "target": "local"}],
+    "app-B": [{"destination": "10.90.0.0/16", "target": "local"}],
+    "data": [{"destination": "10.90.0.0/16", "target": "local"}]
+  },
+  "subnets": [
+    {"name": "public-A", "az": "A", "tier": "public", "cidr": "10.90.0.0/24", "requiredAddresses": 16, "routeTable": "public", "autoAssignPublicIpv4": false},
+    {"name": "public-B", "az": "B", "tier": "public", "cidr": "10.90.1.0/24", "requiredAddresses": 16, "routeTable": "public", "autoAssignPublicIpv4": false},
+    {"name": "app-A", "az": "A", "tier": "app", "cidr": "10.90.10.0/24", "requiredAddresses": 140, "routeTable": "app-A", "autoAssignPublicIpv4": false},
+    {"name": "app-B", "az": "B", "tier": "app", "cidr": "10.90.11.0/24", "requiredAddresses": 140, "routeTable": "app-B", "autoAssignPublicIpv4": false},
+    {"name": "data-A", "az": "A", "tier": "data", "cidr": "10.90.20.0/24", "requiredAddresses": 32, "routeTable": "data", "autoAssignPublicIpv4": false},
+    {"name": "data-B", "az": "B", "tier": "data", "cidr": "10.90.21.0/24", "requiredAddresses": 32, "routeTable": "data", "autoAssignPublicIpv4": false}
+  ]
+}
