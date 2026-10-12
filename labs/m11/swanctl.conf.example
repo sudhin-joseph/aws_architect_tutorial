@@ -1,0 +1,78 @@
+# L11 template: never deploy without replacing every REPLACE_* value.
+# One tunnel active at a time. This intentionally avoids duplicate policy selectors.
+# Populate only on the disposable appliance in a root-owned mode-0600 file.
+# Exact AWS tunnel options must match: IKEv2, AES256, SHA2-256, DH14/PFS14.
+connections {
+  aws1 {
+    version = 2
+    local_addrs = REPLACE_APPLIANCE_PRIVATE_IP
+    remote_addrs = REPLACE_AWS_TUNNEL_1_PUBLIC_IP
+    proposals = aes256-sha256-prfsha256-modp2048
+    encap = yes
+    mobike = no
+    dpd_delay = 30s
+    rekey_time = 7h
+    local {
+      auth = psk
+      id = REPLACE_APPLIANCE_EIP
+    }
+    remote {
+      auth = psk
+      id = REPLACE_AWS_TUNNEL_1_PUBLIC_IP
+    }
+    children {
+      aws1-net {
+        local_ts = 10.60.10.0/24
+        remote_ts = 10.80.20.0/24
+        esp_proposals = aes256-sha256-modp2048
+        rekey_time = 50m
+        life_time = 1h
+        start_action = none
+        dpd_action = clear
+        close_action = none
+      }
+    }
+  }
+  aws2 {
+    version = 2
+    local_addrs = REPLACE_APPLIANCE_PRIVATE_IP
+    remote_addrs = REPLACE_AWS_TUNNEL_2_PUBLIC_IP
+    proposals = aes256-sha256-prfsha256-modp2048
+    encap = yes
+    mobike = no
+    dpd_delay = 30s
+    rekey_time = 7h
+    local {
+      auth = psk
+      id = REPLACE_APPLIANCE_EIP
+    }
+    remote {
+      auth = psk
+      id = REPLACE_AWS_TUNNEL_2_PUBLIC_IP
+    }
+    children {
+      aws2-net {
+        local_ts = 10.60.10.0/24
+        remote_ts = 10.80.20.0/24
+        esp_proposals = aes256-sha256-modp2048
+        rekey_time = 50m
+        life_time = 1h
+        start_action = none
+        dpd_action = clear
+        close_action = none
+      }
+    }
+  }
+}
+secrets {
+  ike-aws1 {
+    id-1 = REPLACE_APPLIANCE_EIP
+    id-2 = REPLACE_AWS_TUNNEL_1_PUBLIC_IP
+    secret = "REPLACE_TUNNEL_1_PSK"
+  }
+  ike-aws2 {
+    id-1 = REPLACE_APPLIANCE_EIP
+    id-2 = REPLACE_AWS_TUNNEL_2_PUBLIC_IP
+    secret = "REPLACE_TUNNEL_2_PSK"
+  }
+}
