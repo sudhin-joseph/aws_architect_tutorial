@@ -676,8 +676,8 @@ window.LMS_CATALOG = {
      "id": "M11",
      "title": "Hybrid connectivity",
      "track": "C",
-     "levels": "200–300",
-     "hours": "4 h",
+     "levels": "200–400",
+     "hours": "8 h",
      "exam": "Tasks 1.2, 3.4, 4.4",
      "prereqs": [
       "M09",
@@ -706,7 +706,7 @@ window.LMS_CATALOG = {
        "id": "M11.04",
        "title": "Resilient hybrid designs",
        "level": "300",
-       "concepts": "DX + VPN backup, dual DX for maximum resiliency, bandwidth sizing"
+       "concepts": "DX + VPN backup, DX device/location diversity and maximum-resiliency model, bandwidth sizing"
       },
       {
        "id": "M11.05",

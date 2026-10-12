@@ -2,7 +2,7 @@
 
 A self-paced learning app for **AWS Solutions Architect – Associate (SAA-C03)**, plus DevOps/IaC and system design. It is plain HTML/CSS/JavaScript, with **no build step, no dependencies and no server**.
 
-The curriculum blueprint is [`../LMS_PLAN.md`](../LMS_PLAN.md). The initial study schedule is [`../STUDY_PLAN.md`](../STUDY_PLAN.md). This is a local learning pilot: **11 of 47 modules and 80 of 309 planned lessons are available**. Planned outlines do not count against available-content completion.
+The curriculum blueprint is [`../LMS_PLAN.md`](../LMS_PLAN.md). The initial study schedule is [`../STUDY_PLAN.md`](../STUDY_PLAN.md). This is a local learning pilot: **12 of 47 modules and 85 of 309 planned lessons are available**. Planned outlines do not count against available-content completion.
 
 ### M00 pilot (2026-10-08)
 
@@ -11,7 +11,7 @@ M00 contains **five lessons: four reading lessons and one 20-question diagnostic
 - Missed and unanswered questions are saved with original option indexes, explanations and study links. Review them from the dashboard or M00.05 after reloading.
 - Recommendations prioritise weak domains, respect gating, and distinguish available foundations from planned service modules. Scores never grant test-out.
 - The same questions recur on retakes. Only the latest diagnostic is retained; retakes cannot measure performance on unseen questions.
-- Module review metadata and official source links appear on M00, M08, M09 and M10 pages. M01–M07 have not received this pilot audit.
+- Module review metadata and official source links appear on M00, M08, M09, M10 and M11 pages. M01–M07 have not received this pilot audit.
 - Version-1 progress files remain supported. Imports validate nested data before replacing progress; missing fields receive defaults. Older diagnostic scores remain visible and prompt a retake for question-level feedback.
 - LMS lab completion is self-reported. L08 includes a standalone, learner-run read-only AWS configuration validator; no integrated cloud verification is provided. Authentication, mock exams, pre-tests, certificates and server synchronisation remain planned.
 
@@ -22,6 +22,8 @@ M08 adds eight lessons (340 estimated reading/practice minutes), 32 knowledge ch
 M09 adds eight detailed lessons (420 estimated minutes), 40 knowledge checks, 32 lesson drills, a 32-question quiz, 64 flashcards, eight architecture diagrams and eight workflow diagrams. Every lesson includes worked examples and detailed use cases. [L09 runbook and worksheet](labs/m09/README.md) cover a hand-built two-AZ topology and a paid NACL/Flow Logs break/fix extension, with eight lab drills. The Python checker validates an offline IPv4 plan only; labs are not deployment-tested. M02 is the prerequisite. Budget approximately 12 hours including labs and review; source review 2026-10-08, next review 2027-01-08.
 
 M10 covers peering, Transit Gateway, gateway/interface endpoints, PrivateLink, network cost modelling and Lattice awareness. [L10 runbook and worksheet](labs/m10/README.md) distinguish route configuration, observed requests and Flow Log evidence. Allow approximately eight hours with lab and review. M09 is the prerequisite. Source review 2026-10-09; next review 2027-01-09. No AWS resources are created by the LMS.
+
+M11 adds five hybrid-connectivity lessons (225 estimated minutes), ten accessible diagrams, 20 knowledge checks, 20 lesson drills, a 25-question quiz and 40 flashcards. [L11 runbook and worksheet](labs/m11/README.md) include an offline routing/capacity checker and a paid strongSwan VPN extension that tests return-route failure and manual recovery through each tunnel. Allow approximately eight hours including lab and review. M09 and M10 are prerequisites. Source review 2026-10-12; next review 2027-01-12. The cloud lab has not been deployed by the author and does not demonstrate automatic failover.
 
 For new modules, preserve this content standard: explain the concept and limitations, trace a workflow, show meaningful architecture boundaries, work through a use case with decision/trade-off/failure behavior, then assess the reasoning. Diagrams must have accessible titles/descriptions and remain readable on mobile. Distinguish offline exercises, author-tested behavior and learner-observed AWS evidence.
 
@@ -99,6 +101,8 @@ lms/
 ├── content/m08.js        M08 Threat protection, detection and perimeter security
 ├── content/m09.js        M09 Amazon VPC core; 16 accessible inline SVG diagrams
 ├── content/m10.js        M10 VPC connectivity; six lessons and 12 accessible diagrams
+├── content/m11.js        M11 Hybrid connectivity; five lessons and ten accessible diagrams
+├── labs/m11/             strongSwan VPN runbook/template and offline routing/capacity checker
 ├── labs/m10/             TGW/S3 runbook, route worksheet and offline checker
 ├── labs/m08/             CloudFormation JSON, read-only validator and runbook
 ├── labs/m09/             manual runbook, IPv4 worksheet and offline checker
@@ -213,7 +217,8 @@ python3 lms/tools/build_catalog.py
 | M08 Threat protection, detection and perimeter security | Source-reviewed: 8 lessons, 32 knowledge checks, 24 lesson drills, Lab L08 with downloadable infrastructure/validator and 3 drills, 24-question quiz, 48 flashcards; cloud deployment not tested |
 | M09 Amazon VPC core | Source-reviewed: 8 detailed lessons, 16 diagrams, 40 knowledge checks, 32 lesson drills, 32-question quiz, 64 flashcards, L09a/L09b with 8 lab drills and an offline plan checker; cloud execution not tested |
 | M10 VPC connectivity and private access | Source-reviewed: 6 lessons (270 estimated minutes), 12 diagrams, 24 knowledge checks, 24 lesson drills, 24-question quiz, 48 flashcards, L10 with 4 lab drills and an offline route checker; cloud execution not tested |
-| M11–M46 | 🚧 Outline only (from the blueprint), shown as "Coming soon" |
+| M11 Hybrid connectivity | Source-reviewed: 5 lessons, 10 diagrams, 20 knowledge checks, 20 lesson drills, 25-question quiz, 40 flashcards, L11 with 4 drills and offline model checker; cloud deployment not tested; manual tunnel recovery only |
+| M12–M46 | 🚧 Outline only (from the blueprint), shown as "Coming soon" |
 
 ## Authoring gotcha: backslashes in template literals
 
